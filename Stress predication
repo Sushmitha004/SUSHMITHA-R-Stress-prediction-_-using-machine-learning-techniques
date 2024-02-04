@@ -1,0 +1,661 @@
+# Module 1: Data validation and pre-processing technique
+
+#import library packages
+import pandas as pd
+import numpy as np
+
+import warnings
+warnings.filterwarnings("ignore")
+
+#Load given dataset
+data = pd.read_csv("depressed.csv")
+
+Before drop the given dataset:
+
+data.head()
+
+#shape
+data.shape
+
+After drop the given dataset:
+
+df = data.dropna()
+
+df.head()
+
+#shape
+df.shape
+
+#columns
+df.columns
+
+#To describe the dataframe
+df.describe()
+
+#Checking datatype and information about dataset
+df.info()
+
+Checking duplicate values of dataframe
+
+df.sex.unique()
+
+df.Age.unique()
+
+df.Married.unique()
+
+df.education_level.unique()
+
+df.incoming_agricultural.unique()
+
+df.total_members_in_family.unique()
+
+df.incoming_own_farm.unique()
+
+print("Age of patient ranges :", sorted(df['Age'].unique()))
+
+df.depressed.unique()
+
+Before Pre_Processing:
+
+df.head()
+
+After Pre_Processing:
+
+from sklearn.preprocessing import LabelEncoder
+
+var = ['sex', 'Age', 'Married', 'education_level', 'total_members_in_family',
+       'living_expenses', 'incoming_salary', 'incoming_own_farm',
+       'incoming_business', 'incoming_no_business', 'incoming_agricultural',
+       'depressed']
+
+le = LabelEncoder()
+
+for i in var:
+    df[i] = le.fit_transform(df[i]).astype(int)
+
+df.head()
+
+# Module 2: Exploration data analysis of visualization and training a model by given attributes
+
+#import library packages
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import numpy as np
+
+import warnings
+warnings.filterwarnings('ignore')
+
+data = pd.read_csv("depressed.csv")
+
+df = data.dropna()
+
+df.head()
+
+df.columns
+
+pd.crosstab(df.Married,df.depressed)
+
+#Histogram Plot of Age distribution
+df["Age"].hist(figsize=(10,8), color="red")
+plt.title("Age Distribution")
+plt.xlabel("Age")
+plt.ylabel("No of Patients")
+plt.show()
+
+#barplot for members in family and depressed
+fig, ax = plt.subplots(figsize=(15,8))
+sns.barplot(x = "total_members_in_family", y = "depressed", ax=ax, data=df)
+plt.title("Members in Family vs Depression")
+
+#Propagation by variable
+def PropByVar(df, variable):
+    dataframe_pie = df[variable].value_counts()
+    ax = dataframe_pie.plot.pie(figsize=(10,10), autopct='%1.2f%%', fontsize = 12)
+    ax.set_title(variable + ' \n', fontsize = 15)
+    return np.round(dataframe_pie/df.shape[0]*100,2)
+PropByVar(df, 'education_level')
+
+fig, ax = plt.subplots(figsize=(15,6))
+sns.boxplot(df.Age, ax =ax)
+plt.title("Age distribution")
+plt.show()
+
+sns.pairplot(df)
+plt.show()
+
+fig, ax = plt.subplots(figsize=(15,6))
+sns.violinplot(y = df['Age'], x = df['depressed'], ax=ax)
+plt.title("Depressed Persons and their age")
+plt.show()
+
+# Heatmap plot diagram
+fig, ax = plt.subplots(figsize=(15,10))
+sns.heatmap(df.corr(), ax=ax, annot=True)
+
+df.head()
+
+Spliting Train/Test:
+
+#preprocessing, split test and dataset, split response variable
+X = df.drop(labels='depressed', axis=1)
+#Response variable
+y = df.loc[:,'depressed'] 
+
+X.head()
+
+y.head()
+
+#We'll use a test size of 30%. We also stratify the split on the response variable, which is very important to do because there are so few fraudulent transactions.
+from sklearn.model_selection import train_test_split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=1, stratify=y)
+print("Number of training dataset: ", len(X_train))
+print("Number of test dataset: ", len(X_test))
+print("Total number of dataset: ", len(X_train)+len(X_test))
+
+X_train
+
+X_test
+
+y_train
+
+def qul_No_qul_bar_plot(df, bygroup):
+    dataframe_by_Group = pd.crosstab(df[bygroup], columns=df["depressed"], normalize = 'index')
+    dataframe_by_Group = np.round((dataframe_by_Group * 100), decimals=2)
+    ax = dataframe_by_Group.plot.bar(figsize=(15,7));
+    vals = ax.get_yticks()
+    ax.set_yticklabels(['{:3.0f}%'.format(x) for x in vals]);
+    ax.set_xticklabels(dataframe_by_Group.index,rotation = 0, fontsize = 15);
+    ax.set_title('Depression or not by given attributes (%) (by ' + dataframe_by_Group.index.name + ')\n', fontsize = 15)
+    ax.set_xlabel(dataframe_by_Group.index.name, fontsize = 12)
+    ax.set_ylabel('(%)', fontsize = 12)
+    ax.legend(loc = 'upper left',bbox_to_anchor=(1.0,1.0), fontsize= 12)
+    rects = ax.patches
+
+    # Add Data Labels
+
+    for rect in rects:
+        height = rect.get_height()
+        ax.text(rect.get_x() + rect.get_width()/2, 
+                height + 2, 
+                str(height)+'%', 
+                ha='center', 
+                va='bottom',
+                fontsize = 12)
+    return dataframe_by_Group
+
+
+
+qul_No_qul_bar_plot(df, 'Age')
+
+# Module 3 : Performance measurements of Logistic regression
+
+#import library packages
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import numpy as np
+
+import warnings
+warnings.filterwarnings('ignore')
+
+#Load given dataset
+data = pd.read_csv("depressed.csv")
+
+df=data.dropna()
+
+df.columns
+
+#According to the cross-validated MCC scores, the random forest is the best-performing model, so now let's evaluate its performance on the test set.
+from sklearn.metrics import confusion_matrix, classification_report, accuracy_score, roc_auc_score
+
+X = df.drop(labels='depressed', axis=1)
+#Response variable
+y = df.loc[:,'depressed'] 
+
+#We'll use a test size of 30%. We also stratify the split on the response variable, which is very important to do because there are so few fraudulent transactions.
+from sklearn.model_selection import train_test_split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=1, stratify=y)
+
+Logistic Regression :
+
+from sklearn.metrics import accuracy_score, confusion_matrix
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import cross_val_score
+
+logR= LogisticRegression()
+
+logR.fit(X_train,y_train)
+
+predictR = logR.predict(X_test)
+
+print("")
+print('Classification report of Logistic Regression Results:')
+print("")
+print(classification_report(y_test,predictR))
+
+print("")
+cm=confusion_matrix(y_test,predictR)
+print('Confusion Matrix result of Logistic Regression is:\n',cm)
+print("")
+sensitivity = cm[0,0]/(cm[0,0]+cm[0,1])
+print('Sensitivity : ', sensitivity )
+print("")
+specificity = cm[1,1]/(cm[1,0]+cm[1,1])
+print('Specificity : ', specificity)
+print("")
+
+accuracy = cross_val_score(logR, X, y, scoring='accuracy')
+print('Cross validation test results of accuracy:')
+print(accuracy)
+#get the mean of each fold 
+print("")
+print("Accuracy result of Logistic Regression is:",accuracy.mean() * 100)
+LR=accuracy.mean() * 100
+
+def graph():
+    import matplotlib.pyplot as plt
+    data=[LR]
+    alg="Logistic Regression"
+    plt.figure(figsize=(5,5))
+    b=plt.bar(alg,data,color=("b"))
+    plt.title("Accuracy comparison of Depression",fontsize=15)
+    plt.legend(b,data,fontsize=9)
+
+graph()
+
+TN = cm[0][0]
+FN = cm[1][0]
+TP = cm[1][1]
+FP = cm[0][1]
+print("True Positive :",TP)
+print("True Negative :",TN)
+print("False Positive :",FP)
+print("False Negative :",FN)
+print("")
+TPR = TP/(TP+FN)
+TNR = TN/(TN+FP)
+FPR = FP/(FP+TN)
+FNR = FN/(TP+FN)
+print("True Positive Rate :",TPR)
+print("True Negative Rate :",TNR)
+print("False Positive Rate :",FPR)
+print("False Negative Rate :",FNR)
+print("")
+PPV = TP/(TP+FP)
+NPV = TN/(TN+FN)
+print("Positive Predictive Value :",PPV)
+print("Negative predictive value :",NPV)
+
+def plot_confusion_matrix(cm2, title='Confusion matrix-LogisticRegression', cmap=plt.cm.Blues):
+    target_names=['Predict','Actual']
+    plt.imshow(cm2, interpolation='nearest', cmap=cmap)
+    plt.title(title)
+    plt.colorbar()
+    tick_marks = np.arange(len(target_names))
+    plt.xticks(tick_marks, target_names, rotation=45)
+    plt.yticks(tick_marks, target_names)
+    plt.tight_layout()
+    plt.ylabel('True label')
+    plt.xlabel('Predicted label')
+
+cm2=confusion_matrix(y_test, predictR)
+print('Confusion matrix-LogisticRegression:')
+print(cm2)
+plot_confusion_matrix(cm2)
+
+# Module 4 : Performance measurements of Random Forest classifier:
+
+#import library packages
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import numpy as np
+
+import warnings
+warnings.filterwarnings('ignore')
+
+#Load given dataset
+data = pd.read_csv("depressed.csv")
+
+df=data.dropna()
+
+df.columns
+
+#According to the cross-validated MCC scores, the random forest is the best-performing model, so now let's evaluate its performance on the test set.
+from sklearn.metrics import confusion_matrix, classification_report, accuracy_score, roc_auc_score
+
+X = df.drop(labels='depressed', axis=1)
+#Response variable
+y = df.loc[:,'depressed'] 
+
+#We'll use a test size of 30%. We also stratify the split on the response variable, which is very important to do because there are so few fraudulent transactions.
+from sklearn.model_selection import train_test_split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=1, stratify=y)
+
+RandomForestClassifier:
+
+from sklearn.metrics import accuracy_score, confusion_matrix
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import cross_val_score
+
+rfc = RandomForestClassifier()
+
+rfc.fit(X_train,y_train)
+
+predictR = rfc.predict(X_test)
+
+print("")
+print('Classification report of Random Forest Classifier Results:')
+print("")
+print(classification_report(y_test,predictR))
+
+print("")
+cm=confusion_matrix(y_test,predictR)
+print('Confusion Matrix result of Random Forest Classifier is:\n',cm)
+print("")
+sensitivity = cm[0,0]/(cm[0,0]+cm[0,1])
+print('Sensitivity : ', sensitivity )
+print("")
+specificity = cm[1,1]/(cm[1,0]+cm[1,1])
+print('Specificity : ', specificity)
+print("")
+
+accuracy = cross_val_score(rfc, X, y, scoring='accuracy')
+print('Cross validation test results of accuracy:')
+print(accuracy)
+#get the mean of each fold 
+print("")
+print("Accuracy result of Random Forest Classifier is:",accuracy.mean() * 100)
+LR=accuracy.mean() * 100
+
+def graph():
+    import matplotlib.pyplot as plt
+    data=[LR]
+    alg="Random Fores tClassifier"
+    plt.figure(figsize=(5,5))
+    b=plt.bar(alg,data,color=("b"))
+    plt.title("Accuracy comparison of Depression",fontsize=15)
+    plt.legend(b,data,fontsize=9)
+
+graph()
+
+TP = cm[0][0]
+FP = cm[1][0]
+FN = cm[1][1]
+TN = cm[0][1]
+print("True Positive :",TP)
+print("True Negative :",TN)
+print("False Positive :",FP)
+print("False Negative :",FN)
+print("")
+TPR = TP/(TP+FN)
+TNR = TN/(TN+FP)
+FPR = FP/(FP+TN)
+FNR = FN/(TP+FN)
+print("True Positive Rate :",TPR)
+print("True Negative Rate :",TNR)
+print("False Positive Rate :",FPR)
+print("False Negative Rate :",FNR)
+print("")
+PPV = TP/(TP+FP)
+NPV = TN/(TN+FN)
+print("Positive Predictive Value :",PPV)
+print("Negative predictive value :",NPV)
+
+def plot_confusion_matrix(cm2, title='Confusion matrix-RandomForestClassifier', cmap=plt.cm.Blues):
+    target_names=['Predict','Actual']
+    plt.imshow(cm2, interpolation='nearest', cmap=cmap)
+    plt.title(title)
+    plt.colorbar()
+    tick_marks = np.arange(len(target_names))
+    plt.xticks(tick_marks, target_names, rotation=45)
+    plt.yticks(tick_marks, target_names)
+    plt.tight_layout()
+    plt.ylabel('True label')
+    plt.xlabel('Predicted label')
+
+cm2=confusion_matrix(y_test, predictR)
+print('Confusion matrix-RandomForestClassifier:')
+print(cm2)
+plot_confusion_matrix(cm2)
+
+import joblib
+joblib.dump(rfc,"RF.pkl")
+
+# Module 5 : Performance measurements of Decision Tree Classifier:
+
+#import library packages
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import numpy as np
+
+import warnings
+warnings.filterwarnings('ignore')
+
+#Load given dataset
+data = pd.read_csv("depressed.csv")
+
+df=data.dropna()
+
+df.columns
+
+#According to the cross-validated MCC scores, the random forest is the best-performing model, so now let's evaluate its performance on the test set.
+from sklearn.metrics import confusion_matrix, classification_report, accuracy_score, roc_auc_score
+
+X = df.drop(labels='depressed', axis=1)
+#Response variable
+y = df.loc[:,'depressed'] 
+
+#We'll use a test size of 30%. We also stratify the split on the response variable, which is very important to do because there are so few fraudulent transactions.
+from sklearn.model_selection import train_test_split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=1, stratify=y)
+
+Decision Tree Classifier:
+
+from sklearn.metrics import accuracy_score, confusion_matrix
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.model_selection import cross_val_score
+
+dtc = DecisionTreeClassifier()
+
+dtc.fit(X_train,y_train)
+
+predictR = dtc.predict(X_test)
+
+print("")
+print('Classification report of Decision Tree Classifier Results:')
+print("")
+print(classification_report(y_test,predictR))
+
+print("")
+cm=confusion_matrix(y_test,predictR)
+print('Confusion Matrix result of Decision Tree Classifier is:\n',cm)
+print("")
+sensitivity = cm[0,0]/(cm[0,0]+cm[0,1])
+print('Sensitivity : ', sensitivity )
+print("")
+specificity = cm[1,1]/(cm[1,0]+cm[1,1])
+print('Specificity : ', specificity)
+print("")
+
+accuracy = cross_val_score(dtc, X, y, scoring='accuracy')
+print('Cross validation test results of accuracy:')
+print(accuracy)
+#get the mean of each fold 
+print("")
+print("Accuracy result of Decision Tree Classifier is:",accuracy.mean() * 100)
+LR=accuracy.mean() * 100
+
+def graph():
+    import matplotlib.pyplot as plt
+    data=[LR]
+    alg="Decision Tree Classifier "
+    plt.figure(figsize=(5,5))
+    b=plt.bar(alg,data,color=("b"))
+    plt.title("Accuracy comparison of Depression",fontsize=15)
+    plt.legend(b,data,fontsize=9)
+
+graph()
+
+TN = cm[0][0]
+FN = cm[1][0]
+TP = cm[1][1]
+FP = cm[0][1]
+print("True Positive :",TP)
+print("True Negative :",TN)
+print("False Positive :",FP)
+print("False Negative :",FN)
+print("")
+TPR = TP/(TP+FN)
+TNR = TN/(TN+FP)
+FPR = FP/(FP+TN)
+FNR = FN/(TP+FN)
+print("True Positive Rate :",TPR)
+print("True Negative Rate :",TNR)
+print("False Positive Rate :",FPR)
+print("False Negative Rate :",FNR)
+print("")
+PPV = TP/(TP+FP)
+NPV = TN/(TN+FN)
+print("Positive Predictive Value :",PPV)
+print("Negative predictive value :",NPV)
+
+def plot_confusion_matrix(cm2, title='Confusion matrix-DecisionTreeClassifier', cmap=plt.cm.Blues):
+    target_names=['Predict','Actual']
+    plt.imshow(cm2, interpolation='nearest', cmap=cmap)
+    plt.title(title)
+    plt.colorbar()
+    tick_marks = np.arange(len(target_names))
+    plt.xticks(tick_marks, target_names, rotation=45)
+    plt.yticks(tick_marks, target_names)
+    plt.tight_layout()
+    plt.ylabel('True label')
+    plt.xlabel('Predicted label')
+
+cm2=confusion_matrix(y_test, predictR)
+print('Confusion matrix-DecisionTreeClassifier:')
+print(cm2)
+plot_confusion_matrix(cm2)
+
+# Module 6 : Performance measurements of Naive Bayes
+
+#import library packages
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import numpy as np
+
+import warnings
+warnings.filterwarnings('ignore')
+
+#Load given dataset
+data = pd.read_csv("depressed.csv")
+
+df=data.dropna()
+
+df.columns
+
+#According to the cross-validated MCC scores, the random forest is the best-performing model, so now let's evaluate its performance on the test set.
+from sklearn.metrics import confusion_matrix, classification_report, accuracy_score, roc_auc_score
+
+X = df.drop(labels='depressed', axis=1)
+#Response variable
+y = df.loc[:,'depressed'] 
+
+#We'll use a test size of 30%. We also stratify the split on the response variable, which is very important to do because there are so few fraudulent transactions.
+from sklearn.model_selection import train_test_split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=1, stratify=y)
+
+Naive Bayes:
+
+from sklearn.metrics import accuracy_score, confusion_matrix
+from sklearn.naive_bayes import GaussianNB
+from sklearn.model_selection import cross_val_score
+
+nb = GaussianNB()
+
+nb.fit(X_train,y_train)
+
+predictR = nb.predict(X_test)
+
+print("")
+print('Classification report of Naive Bayes Results:')
+print("")
+print(classification_report(y_test,predictR))
+
+print("")
+cm=confusion_matrix(y_test,predictR)
+print('Confusion Matrix result of Naive Bayes is:\n',cm)
+print("")
+sensitivity = cm[0,0]/(cm[0,0]+cm[0,1])
+print('Sensitivity : ', sensitivity )
+print("")
+specificity = cm[1,1]/(cm[1,0]+cm[1,1])
+print('Specificity : ', specificity)
+print("")
+
+accuracy = cross_val_score(nb, X, y, scoring='accuracy')
+print('Cross validation test results of accuracy:')
+print(accuracy)
+#get the mean of each fold 
+print("")
+print("Accuracy result of Naive Bayes is:",accuracy.mean() * 100)
+LR=accuracy.mean() * 100
+
+def graph():
+    import matplotlib.pyplot as plt
+    data=[LR]
+    alg="GaussianNB"
+    plt.figure(figsize=(5,5))
+    b=plt.bar(alg,data,color=("b"))
+    plt.title("Accuracy comparison of Dpression",fontsize=15)
+    plt.legend(b,data,fontsize=9)
+
+graph()
+
+TN = cm[0][0]
+FN = cm[1][0]
+TP = cm[1][1]
+FP = cm[0][1]
+print("True Positive :",TP)
+print("True Negative :",TN)
+print("False Positive :",FP)
+print("False Negative :",FN)
+print("")
+TPR = TP/(TP+FN)
+TNR = TN/(TN+FP)
+FPR = FP/(FP+TN)
+FNR = FN/(TP+FN)
+print("True Positive Rate :",TPR)
+print("True Negative Rate :",TNR)
+print("False Positive Rate :",FPR)
+print("False Negative Rate :",FNR)
+print("")
+PPV = TP/(TP+FP)
+NPV = TN/(TN+FN)
+print("Positive Predictive Value :",PPV)
+print("Negative predictive value :",NPV)
+
+def plot_confusion_matrix(cm2, title='Confusion matrix-Naive Bayes', cmap=plt.cm.Blues):
+    target_names=['Predict','Actual']
+    plt.imshow(cm2, interpolation='nearest', cmap=cmap)
+    plt.title(title)
+    plt.colorbar()
+    tick_marks = np.arange(len(target_names))
+    plt.xticks(tick_marks, target_names, rotation=45)
+    plt.yticks(tick_marks, target_names)
+    plt.tight_layout()
+    plt.ylabel('True label')
+    plt.xlabel('Predicted label')
+
+cm2=confusion_matrix(y_test, predictR)
+print('Confusion matrix-Naive Bayes:')
+print(cm2)
+plot_confusion_matrix(cm2)
+
+
+
+
+
